@@ -1,0 +1,57 @@
+{
+  "compilerOptions": {
+    // ─── Language & Environment ───
+    // ES2022 gives us top-level await, Error.cause, Array.at() etc.
+    // Node.js 20 supports ES2022 natively.
+    "target": "ES2022",
+    "module": "commonjs",
+    "lib": ["ES2022"],
+
+    // ─── Strictness ───
+    // Non-negotiable for enterprise code.
+    // strict:true enables: noImplicitAny, strictNullChecks, strictFunctionTypes,
+    // strictBindCallApply, strictPropertyInitialization, noImplicitThis, alwaysStrict
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+
+    // ─── Module Resolution ───
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+
+    // ─── Emit ───
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    "removeComments": false,
+
+    // ─── Path Aliases ───
+    // Instead of: import { logger } from '../../../infrastructure/logger'
+    // We write:   import { logger } from '@/infrastructure/logger'
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@config/*": ["src/config/*"],
+      "@modules/*": ["src/modules/*"],
+      "@middleware/*": ["src/middleware/*"],
+      "@shared/*": ["src/shared/*"],
+      "@infrastructure/*": ["src/infrastructure/*"]
+    },
+
+    // ─── Decorators ───
+    // Required for tsyringe dependency injection
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+
+    // ─── Skip type checking on node_modules ───
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
+}

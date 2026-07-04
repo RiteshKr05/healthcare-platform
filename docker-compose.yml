@@ -1,0 +1,100 @@
+# ─────────────────────────────────────────
+# MedClaim Platform — Local Development Infrastructure
+#
+# Start:   docker compose up -d
+# Stop:    docker compose down
+# Reset:   docker compose down -v  (deletes all data)
+# Logs:    docker compose logs -f postgres
+# Status:  docker compose ps
+# ─────────────────────────────────────────
+
+services:
+  # ─── PostgreSQL ───
+  # Primary database for all relational data.
+  # 58 tables: users, claims, policies, hospitals, etc.
+  postgres:
+    image: postgres:16-alpine
+    container_name: medclaim-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: medclaim
+      POSTGRES_USER: medclaim
+      POSTGRES_PASSWORD: medclaim_dev
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U medclaim -d medclaim"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── MongoDB ───
+  # Document store for audit logs, notifications, AI conversations.
+  # These collections benefit from flexible schema and TTL indexes.
+  mongodb:
+    image: mongo:7
+    container_name: medclaim-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: medclaim
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis ───
+  # Used for: session storage, rate limiting, caching,
+  # BullMQ job queues, and real-time pub/sub.
+  redis:
+    image: redis:7-alpine
+    container_name: medclaim-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── MinIO ───
+  # S3-compatible object storage. Stores claim documents,
+  # e-cards, COI PDFs, bulk upload files, medical records.
+  # Web console at http://localhost:9001 (minioadmin/minioadmin)
+  minio:
+    image: minio/minio
+    container_name: medclaim-minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # Web Console
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    name: medclaim-postgres-data
+  mongo_data:
+    name: medclaim-mongo-data
+  redis_data:
+    name: medclaim-redis-data
+  minio_data:
+    name: medclaim-minio-data
