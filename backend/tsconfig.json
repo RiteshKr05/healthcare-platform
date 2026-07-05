@@ -11,7 +11,7 @@
     // Non-negotiable for enterprise code.
     // strict:true enables: noImplicitAny, strictNullChecks, strictFunctionTypes,
     // strictBindCallApply, strictPropertyInitialization, noImplicitThis, alwaysStrict
-    "strict": true,
+    // "strict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,

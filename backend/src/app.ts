@@ -3,6 +3,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
+import { env } from './config/env';
+import { prisma } from './infrastructure/database/prisma';
 
 // ─────────────────────────────────────────
 // WHY app.ts and server.ts are SEPARATE:
@@ -38,7 +40,7 @@ app.use(helmet());
 // The legacy app had origin: '*' (allow everything) — a security risk.
 // We whitelist only our frontend domain.
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  origin: env.CORS_ORIGIN || 'http://localhost:3000',
   credentials: true, // allows cookies/auth headers
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'Idempotency-Key'],
@@ -61,7 +63,7 @@ app.use(compression());
 // morgan logs every HTTP request with method, URL, status, response time.
 // 'dev' format is colorized for development.
 // In production, we'll replace this with Winston structured logging.
-if (process.env.NODE_ENV !== 'test') {
+if (env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
 }
 
@@ -72,13 +74,24 @@ if (process.env.NODE_ENV !== 'test') {
 // ─── Root Health Check ───
 // This is NOT the full health check (that comes later with DB checks).
 // This just confirms the Express process is alive.
-app.get('/', (_req: Request, res: Response) => {
-  res.status(200).json({
-    success: true,
-    message: 'MedClaim API is running',
-    environment: process.env.NODE_ENV || 'development',
-    timestamp: new Date().toISOString(),
-  });
+app.get('/', async (_req: Request, res: Response) => {
+  try {
+    await prisma
+    .$queryRaw`SELECT 1`;
+
+    res.status(200).json({
+      success: true,
+      message: 'MedClaim API is running',
+      database: 'connected',
+      environment: env.NODE_ENV,
+      timestamp: new Date().toISOString(),
+    });
+  } catch {
+    res.status(500).json({
+      success: false,
+      message: 'Database connection failed',
+    });
+  }
 });
 
 // ─── 404 Handler ───
@@ -106,7 +119,7 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
     success: false,
     error: {
       code: 'INTERNAL_SERVER_ERROR',
-      message: process.env.NODE_ENV === 'production'
+      message: env.NODE_ENV === 'production'
         ? 'An unexpected error occurred'
         : err.message,
     },

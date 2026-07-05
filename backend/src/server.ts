@@ -1,15 +1,9 @@
-import dotenv from 'dotenv';
-
-// ─── Load environment variables FIRST ───
-// This must happen before importing app.ts or anything else,
-// because those modules may read process.env at import time.
-// Order matters: dotenv → then everything else.
-dotenv.config();
-
 import app from './app';
+import { env } from './config/env';
 
-const PORT = parseInt(process.env.PORT || '5000', 10);
-const APP_NAME = process.env.APP_NAME || 'MedClaim API';
+
+const PORT = env.PORT;
+const APP_NAME = env.APP_NAME;
 
 // ─── Start Server ───
 const server = app.listen(PORT, () => {
@@ -18,7 +12,7 @@ const server = app.listen(PORT, () => {
   ║                                              ║
   ║   ${APP_NAME}                        ║
   ║                                              ║
-  ║   Environment: ${(process.env.NODE_ENV || 'development').padEnd(28)}║
+  ║   Environment: ${(env.NODE_ENV || 'development').padEnd(28)}║
   ║   Port:        ${String(PORT).padEnd(28)}║
   ║   URL:         http://localhost:${String(PORT).padEnd(14)}║
   ║                                              ║
