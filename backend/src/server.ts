@@ -1,5 +1,6 @@
 import app from './app';
 import { env } from './config/env';
+import { logger } from './infrastructure/logger/logger';
 
 
 const PORT = env.PORT;
@@ -7,17 +8,7 @@ const APP_NAME = env.APP_NAME;
 
 // ─── Start Server ───
 const server = app.listen(PORT, () => {
-  console.log(`
-  ╔══════════════════════════════════════════════╗
-  ║                                              ║
-  ║   ${APP_NAME}                        ║
-  ║                                              ║
-  ║   Environment: ${(env.NODE_ENV || 'development').padEnd(28)}║
-  ║   Port:        ${String(PORT).padEnd(28)}║
-  ║   URL:         http://localhost:${String(PORT).padEnd(14)}║
-  ║                                              ║
-  ╚══════════════════════════════════════════════╝
-  `);
+  logger.info(`${env.APP_NAME} running on port ${env.PORT} [${env.NODE_ENV}]`);
 });
 
 // ─── Graceful Shutdown ───
@@ -33,17 +24,17 @@ const server = app.listen(PORT, () => {
 // during deployments.
 
 const gracefulShutdown = (signal: string) => {
-  console.log(`\n[${signal}] Shutting down gracefully...`);
+  logger.info(`\n[${signal}] Shutting down gracefully...`);
 
   server.close(() => {
-    console.log('[SERVER] HTTP server closed');
+    logger.info('[SERVER] HTTP server closed');
     // Future: close Prisma, MongoDB, Redis connections here
     process.exit(0);
   });
 
   // Force kill after 10 seconds if graceful shutdown hangs
   setTimeout(() => {
-    console.error('[SERVER] Forced shutdown — graceful shutdown timed out');
+    logger.error('[SERVER] Forced shutdown — graceful shutdown timed out');
     process.exit(1);
   }, 10_000);
 };
@@ -63,6 +54,7 @@ process.on('uncaughtException', (error: Error) => {
   console.error('[UNCAUGHT EXCEPTION]', error);
   // Uncaught exceptions leave the process in an undefined state.
   // The only safe thing to do is log and exit.
+  logger.error('[UNCAUGHT EXCEPTION]', error);
   process.exit(1);
 });
 

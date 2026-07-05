@@ -5,6 +5,8 @@ import compression from 'compression';
 import morgan from 'morgan';
 import { env } from './config/env';
 import { prisma } from './infrastructure/database/prisma';
+import { log } from 'node:console';
+import { logger } from './infrastructure/logger/logger';
 
 // ─────────────────────────────────────────
 // WHY app.ts and server.ts are SEPARATE:
@@ -113,7 +115,7 @@ app.use((_req: Request, res: Response) => {
 // The legacy app emailed stack traces to the team — good intent, bad implementation.
 // We'll replace this with structured logging + error tracking later.
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-  console.error(`[ERROR] ${err.message}`, err.stack);
+  logger.error(`[ERROR] ${err.message}`, err.stack);
 
   res.status(500).json({
     success: false,
