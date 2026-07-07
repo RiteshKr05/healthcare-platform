@@ -4,9 +4,8 @@ import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
 import { env } from './config/env';
-import { prisma } from './infrastructure/database/prisma';
-import { log } from 'node:console';
 import { logger } from './infrastructure/logger/logger';
+import healthRoutes from './modules/health/health.routes';
 
 // ─────────────────────────────────────────
 // WHY app.ts and server.ts are SEPARATE:
@@ -76,25 +75,7 @@ if (env.NODE_ENV !== 'test') {
 // ─── Root Health Check ───
 // This is NOT the full health check (that comes later with DB checks).
 // This just confirms the Express process is alive.
-app.get('/', async (_req: Request, res: Response) => {
-  try {
-    await prisma
-    .$queryRaw`SELECT 1`;
-
-    res.status(200).json({
-      success: true,
-      message: 'MedClaim API is running',
-      database: 'connected',
-      environment: env.NODE_ENV,
-      timestamp: new Date().toISOString(),
-    });
-  } catch {
-    res.status(500).json({
-      success: false,
-      message: 'Database connection failed',
-    });
-  }
-});
+app.use(`${env.API_PREFIX}/health`, healthRoutes);
 
 // ─── 404 Handler ───
 // Catches any request that didn't match a route above.
